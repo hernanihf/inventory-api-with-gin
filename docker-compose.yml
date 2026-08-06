@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: inventory-postgres-gin
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
+    volumes:
+      - inventory_pgdata:/var/lib/postgresql/data
+      - ./db/create_test_db.sql:/docker-entrypoint-initdb.d/00-create-test-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    container_name: inventory-api-gin
+    environment:
+      API_KEY: supersecret
+      DB_HOST: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  inventory_pgdata:

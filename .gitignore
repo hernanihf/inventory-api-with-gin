@@ -1,0 +1,12 @@
+# Compiled Binaries
+/inventory_api
+/main
+/inventory-api
+
+# Config
+config.json
+
+# System / IDE
+.DS_Store
+.idea/
+.vscode/
