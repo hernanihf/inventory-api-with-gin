@@ -1,4 +1,4 @@
-# This is a Go with GIN Learning Project
+# Learning Project: Go + Gin
 
 This is a simple inventory API to learn Go using GIN framework.
 
