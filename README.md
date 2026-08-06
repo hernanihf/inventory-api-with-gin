@@ -4,7 +4,7 @@ This is a simple inventory API to learn Go using GIN framework.
 
 ---
 
-### BUILD & RUN
+### BUILD & RUN 🛠️
 
 ---
 #### Run project (needs postgres & env vars)
@@ -33,7 +33,7 @@ This is a simple inventory API to learn Go using GIN framework.
 ```go vet ./... && gofmt -l . && go test ./... -race -cover```
 
 ---
-### DOCKER
+### DOCKER 📦
 
 ---
 #### Run project (with declared dependencies )
@@ -55,7 +55,7 @@ This is a simple inventory API to learn Go using GIN framework.
 
 ---
 
-### DB
+### DB 💾
 
 ---
 #### Connection
