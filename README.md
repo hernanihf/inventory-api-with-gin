@@ -28,6 +28,11 @@ This is a simple inventory API to learn Go using GIN framework.
 ```go vet ./...```
 
 ---
+#### Running all the checks
+
+```go vet ./... && gofmt -l . && go test ./... -race -cover```
+
+---
 ### DOCKER
 
 ---
