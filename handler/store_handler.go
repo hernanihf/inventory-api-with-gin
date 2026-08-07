@@ -52,19 +52,20 @@ const (
 // @Param        limit   query     int  false  "Quantity od products (default 20, max 100)"
 // @Param        offset  query     int  false  "From position (default 0)"
 // @Success      200  {object}  model.Page[model.Product]
-// @Failure      400  {string}  string
+// @Failure      400  {object}  model.ErrorResponse
+// @Failure      500  {object}  model.ErrorResponse
 // @Router       /products [get]
 func (s *StoreHandler) GetProducts(c *gin.Context) {
 	limit, offset, err := parsePagination(c)
 	if err != nil {
-		c.Status(http.StatusBadRequest)
+		respondError(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	products, total, err2 := s.productStore.GetProducts(c.Request.Context(), limit, offset)
 	if err2 != nil {
 		slog.Error("failed to get products", "error", err2)
-		c.Status(http.StatusInternalServerError)
+		respondError(c, http.StatusInternalServerError, "internal error")
 		return
 	}
 	c.JSON(http.StatusOK, model.NewPage(products, limit, offset, total))
@@ -75,13 +76,13 @@ func parsePagination(c *gin.Context) (limit, offset int, err error) {
 	if v := c.Query("limit"); v != "" {
 		limit, err = strconv.Atoi(v)
 		if err != nil || limit <= 0 || limit > maxPageLimit {
-			return 0, 0, fmt.Errorf("invalid limit")
+			return 0, 0, fmt.Errorf("limit must be a number between 1 and %d", maxPageLimit)
 		}
 	}
 	if v := c.Query("offset"); v != "" {
 		offset, err = strconv.Atoi(v)
 		if err != nil || offset < 0 {
-			return 0, 0, fmt.Errorf("invalid offset")
+			return 0, 0, fmt.Errorf("offset must be a non-negative number")
 		}
 	}
 	return limit, offset, nil
@@ -93,13 +94,13 @@ func parsePagination(c *gin.Context) (limit, offset int, err error) {
 // @Produce      json
 // @Param        name  path      string  true  "Product name"
 // @Success      200   {object}  model.Product
-// @Failure      404   {string}  string
+// @Failure      404   {object}  model.ErrorResponse
 // @Router       /products/{name} [get]
 func (s *StoreHandler) GetProduct(c *gin.Context) {
 	name := c.Param("name")
 	product, ok := s.productStore.SearchProduct(c.Request.Context(), name)
 	if !ok {
-		c.Status(http.StatusNotFound)
+		respondError(c, http.StatusNotFound, fmt.Sprintf("product %q not found", name))
 		return
 	}
 	c.JSON(http.StatusOK, product)
@@ -113,17 +114,19 @@ func (s *StoreHandler) GetProduct(c *gin.Context) {
 // @Security     ApiKeyAuth
 // @Param        product  body      model.Product  true  "Product"
 // @Success      201      {object}  model.Product
-// @Failure      400      {string}  string
+// @Failure      400      {object}  model.ErrorResponse
+// @Failure      500      {object}  model.ErrorResponse
 // @Router       /products [post]
 func (s *StoreHandler) AddProduct(c *gin.Context) {
 	var product model.Product
 	if err := c.ShouldBindJSON(&product); err != nil {
-		c.Status(http.StatusBadRequest)
+		respondBindError(c, err)
 		return
 	}
 	addedProduct, err := s.productStore.AddProduct(c.Request.Context(), product)
 	if err != nil {
-		c.Status(http.StatusInternalServerError)
+		slog.Error("failed to add product", "error", err)
+		respondError(c, http.StatusInternalServerError, "internal error")
 		return
 	}
 	c.JSON(http.StatusCreated, addedProduct)
@@ -138,13 +141,14 @@ func (s *StoreHandler) AddProduct(c *gin.Context) {
 // @Param        name      path      string         	 true  	"Product name"
 // @Param        quantity  body      productUpdateDTO  	true  	"Quantity to sell"
 // @Success      200  {object}  model.Product
-// @Failure      400  {string}  string
-// @Failure      404  {string}  string
+// @Failure      400  {object}  model.ErrorResponse
+// @Failure      404  {object}  model.ErrorResponse
+// @Failure      500  {object}  model.ErrorResponse
 // @Router       /products/{name}/sell [put]
 func (s *StoreHandler) SellProduct(c *gin.Context) {
 	var productQuantityDTO productUpdateDTO
 	if err := c.ShouldBindJSON(&productQuantityDTO); err != nil {
-		c.Status(http.StatusBadRequest)
+		respondBindError(c, err)
 		return
 	}
 	nameParam := c.Param("name")
@@ -152,21 +156,21 @@ func (s *StoreHandler) SellProduct(c *gin.Context) {
 	if err2 != nil {
 		stockError := model.InsufficientStockError{}
 		if errors.As(err2, &stockError) {
-			c.Status(http.StatusBadRequest)
+			respondError(c, http.StatusBadRequest, err2.Error())
 			return
 		}
 		foundError := model.ProductNotFoundError{}
 		if errors.As(err2, &foundError) {
-			c.Status(http.StatusNotFound)
+			respondError(c, http.StatusNotFound, err2.Error())
 			return
 		}
 		badInputError := model.BadFieldInputError{}
 		if errors.As(err2, &badInputError) {
-			c.Status(http.StatusBadRequest)
+			respondError(c, http.StatusBadRequest, err2.Error())
 			return
 		}
 		slog.Error("failed to sell product", "error", err2, "product", nameParam)
-		c.Status(http.StatusInternalServerError)
+		respondError(c, http.StatusInternalServerError, "internal error")
 		return
 	}
 	c.JSON(http.StatusOK, prod)
@@ -181,13 +185,14 @@ func (s *StoreHandler) SellProduct(c *gin.Context) {
 // @Param        	name      path      string          	true  "Name of the product"
 // @Param        	quantity  body      productUpdateDTO  	true  "Quantity to add"
 // @Success      	200  {object}  model.Product
-// @Failure      	400  {string}  string
-// @Failure      	404  {string}  string
+// @Failure      	400  {object}  model.ErrorResponse
+// @Failure      	404  {object}  model.ErrorResponse
+// @Failure      	500  {object}  model.ErrorResponse
 // @Router       	/products/{name}/addStock [put]
 func (s *StoreHandler) AddProductStock(c *gin.Context) {
 	var productQuantityDTO productUpdateDTO
 	if err := c.ShouldBindJSON(&productQuantityDTO); err != nil {
-		c.Status(http.StatusBadRequest)
+		respondBindError(c, err)
 		return
 	}
 	nameParam := c.Param("name")
@@ -195,16 +200,16 @@ func (s *StoreHandler) AddProductStock(c *gin.Context) {
 	if err2 != nil {
 		foundError := model.ProductNotFoundError{}
 		if errors.As(err2, &foundError) {
-			c.Status(http.StatusNotFound)
+			respondError(c, http.StatusNotFound, err2.Error())
 			return
 		}
 		badInputError := model.BadFieldInputError{}
 		if errors.As(err2, &badInputError) {
-			c.Status(http.StatusBadRequest)
+			respondError(c, http.StatusBadRequest, err2.Error())
 			return
 		}
 		slog.Error("failed to add product stock", "error", err2, "product", nameParam)
-		c.Status(http.StatusInternalServerError)
+		respondError(c, http.StatusInternalServerError, "internal error")
 		return
 	}
 	c.JSON(http.StatusOK, prod)
