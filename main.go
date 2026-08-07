@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"inventory_api/config"
 	"inventory_api/database"
+	_ "inventory_api/docs"
 	"inventory_api/handler"
 	"inventory_api/middleware"
 	"inventory_api/store"
@@ -19,10 +20,21 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-const port = "8080"
+const serverPort = "8080"
 
+// @title           Inventory API
+// @version         1.0
+// @description     Inventory API — Project to learn Go + Gin.
+// @host            localhost:8080
+// @BasePath        /
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name X-API-Key
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
 	r := gin.New()
@@ -35,8 +47,9 @@ func main() {
 	newStore := store.InitStore(db)
 
 	productStoreHandler := handler.NewStore(newStore)
-	r.Use(middleware.RequestLogger())
+	r.Use(middleware.RequestLogger(), gin.Recovery())
 	r.GET("/", productStoreHandler.HelloWorld)
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	r.GET("/favicon.ico", func(c *gin.Context) { c.Status(http.StatusNoContent) })
 	r.GET("/products/:name", productStoreHandler.GetProduct)
 	r.GET("/products", productStoreHandler.GetProducts)
@@ -55,7 +68,7 @@ func main() {
 
 func startServer(r *gin.Engine, ctx context.Context) {
 	srv := &http.Server{
-		Addr:    ":" + port,
+		Addr:    ":" + serverPort,
 		Handler: r,
 	}
 
@@ -74,7 +87,7 @@ func startServer(r *gin.Engine, ctx context.Context) {
 
 func getStartServerFc(srv *http.Server) func() {
 	return func() {
-		fmt.Printf("Listening on port %s\n", port)
+		fmt.Printf("Listening on port %s\n", serverPort)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Println(err)
 		}

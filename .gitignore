@@ -2,6 +2,7 @@
 /inventory_api
 /main
 /inventory-api
+/docs
 
 # Config
 config.json

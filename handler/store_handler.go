@@ -22,7 +22,7 @@ type productStore interface {
 }
 
 type productUpdateDTO struct {
-	Quantity int `json:"quantity"`
+	Quantity int `json:"quantity" binding:"required,gt=0"`
 }
 
 type StoreHandler struct {
@@ -45,6 +45,15 @@ const (
 	maxPageLimit     = 100
 )
 
+// GetProducts 	godoc
+// @Summary      List product
+// @Tags         products
+// @Produce      json
+// @Param        limit   query     int  false  "Quantity od products (default 20, max 100)"
+// @Param        offset  query     int  false  "From position (default 0)"
+// @Success      200  {object}  model.Page[model.Product]
+// @Failure      400  {string}  string
+// @Router       /products [get]
 func (s *StoreHandler) GetProducts(c *gin.Context) {
 	limit, offset, err := parsePagination(c)
 	if err != nil {
@@ -78,6 +87,14 @@ func parsePagination(c *gin.Context) (limit, offset int, err error) {
 	return limit, offset, nil
 }
 
+// GetProduct godoc
+// @Summary      Search producto by name
+// @Tags         products
+// @Produce      json
+// @Param        name  path      string  true  "Product name"
+// @Success      200   {object}  model.Product
+// @Failure      404   {string}  string
+// @Router       /products/{name} [get]
 func (s *StoreHandler) GetProduct(c *gin.Context) {
 	name := c.Param("name")
 	product, ok := s.productStore.SearchProduct(c.Request.Context(), name)
@@ -88,6 +105,16 @@ func (s *StoreHandler) GetProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, product)
 }
 
+// AddProduct godoc
+// @Summary      Create or update product
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        product  body      model.Product  true  "Product"
+// @Success      201      {object}  model.Product
+// @Failure      400      {string}  string
+// @Router       /products [post]
 func (s *StoreHandler) AddProduct(c *gin.Context) {
 	var product model.Product
 	if err := c.ShouldBindJSON(&product); err != nil {
@@ -102,6 +129,18 @@ func (s *StoreHandler) AddProduct(c *gin.Context) {
 	c.JSON(http.StatusCreated, addedProduct)
 }
 
+// SellProduct godoc
+// @Summary      Sell stock of a product
+// @Tags         products
+// @Accept       json
+// @Produce      json
+// @Security     ApiKeyAuth
+// @Param        name      path      string         	 true  	"Product name"
+// @Param        quantity  body      productUpdateDTO  	true  	"Quantity to sell"
+// @Success      200  {object}  model.Product
+// @Failure      400  {string}  string
+// @Failure      404  {string}  string
+// @Router       /products/{name}/sell [put]
 func (s *StoreHandler) SellProduct(c *gin.Context) {
 	var productQuantityDTO productUpdateDTO
 	if err := c.ShouldBindJSON(&productQuantityDTO); err != nil {
@@ -133,6 +172,18 @@ func (s *StoreHandler) SellProduct(c *gin.Context) {
 	c.JSON(http.StatusOK, prod)
 }
 
+// AddProductStock 	godoc
+// @Summary      	Add product stock
+// @Tags         	products
+// @Accept       	json
+// @Produce      	json
+// @Security     	ApiKeyAuth
+// @Param        	name      path      string          	true  "Name of the product"
+// @Param        	quantity  body      productUpdateDTO  	true  "Quantity to add"
+// @Success      	200  {object}  model.Product
+// @Failure      	400  {string}  string
+// @Failure      	404  {string}  string
+// @Router       	/products/{name}/addStock [put]
 func (s *StoreHandler) AddProductStock(c *gin.Context) {
 	var productQuantityDTO productUpdateDTO
 	if err := c.ShouldBindJSON(&productQuantityDTO); err != nil {
