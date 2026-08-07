@@ -19,7 +19,7 @@ func StartLowStockMonitor(ctx context.Context, s productLister) {
 	for {
 		select {
 		case <-ctx.Done():
-			slog.Info("low stock monitor: apagando")
+			slog.Info("low stock monitor: shutting down")
 			return
 		case <-ticker.C:
 			checkLowStock(ctx, s)
@@ -31,7 +31,7 @@ func checkLowStock(ctx context.Context, s productLister) {
 	const lowStock = 5
 	products, err := s.GetAllProducts(ctx)
 	if err != nil {
-		slog.Error("low stock monitor: no se pudo leer productos", "error", err)
+		slog.Error("low stock monitor: could not read products", "error", err)
 		return
 	}
 
@@ -39,6 +39,6 @@ func checkLowStock(ctx context.Context, s productLister) {
 		return p.Stock < lowStock
 	})
 	for _, p := range low {
-		slog.Warn("stock bajo", "product", p.Name, "stock", p.Stock)
+		slog.Warn("low stock", "product", p.Name, "stock", p.Stock)
 	}
 }

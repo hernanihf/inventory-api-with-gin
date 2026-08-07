@@ -89,7 +89,7 @@ func parsePagination(c *gin.Context) (limit, offset int, err error) {
 }
 
 // GetProduct godoc
-// @Summary      Search producto by name
+// @Summary      Search product by name
 // @Tags         products
 // @Produce      json
 // @Param        name  path      string  true  "Product name"

@@ -31,11 +31,11 @@ func TestCheckLowStock_WarnsOnLowStock(t *testing.T) {
 	checkLowStock(context.Background(), lister)
 
 	out := buf.String()
-	if !strings.Contains(out, "stock bajo") || !strings.Contains(out, "coca") {
-		t.Errorf("esperaba un warning de stock bajo para coca, log: %s", out)
+	if !strings.Contains(out, "low stock") || !strings.Contains(out, "coca") {
+		t.Errorf("expects low stock warning for coca, log: %s", out)
 	}
 	if strings.Contains(out, "sprite") {
-		t.Errorf("no esperaba ningún log para sprite (stock alto), log: %s", out)
+		t.Errorf("not expect logs for sprite (high stock), log: %s", out)
 	}
 }
 
@@ -48,7 +48,7 @@ func TestCheckLowStock_NoLowStock(t *testing.T) {
 	checkLowStock(context.Background(), lister)
 
 	if strings.Contains(buf.String(), "stock bajo") {
-		t.Errorf("no esperaba ningún warning, log: %s", buf.String())
+		t.Errorf("not expect warnings, log: %s", buf.String())
 	}
 }
 
@@ -60,7 +60,7 @@ func TestCheckLowStock_StoreError(t *testing.T) {
 
 	checkLowStock(context.Background(), lister)
 
-	if !strings.Contains(buf.String(), "no se pudo leer productos") {
-		t.Errorf("esperaba un log de error, log: %s", buf.String())
+	if !strings.Contains(buf.String(), "could not read products") {
+		t.Errorf("expects error log, log: %s", buf.String())
 	}
 }

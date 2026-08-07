@@ -26,10 +26,10 @@ func TestAuth_ValidKey(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Errorf("esperaba 200, obtuve %d", rec.Code)
+		t.Errorf("expected %d, got %d", http.StatusOK, rec.Code)
 	}
 	if !called {
-		t.Errorf("esperaba que se llame al siguiente handler")
+		t.Errorf("next handler call was expected to be called")
 	}
 }
 
@@ -51,10 +51,10 @@ func TestAuth_MissingKey(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("esperaba 401, obtuve %d", rec.Code)
+		t.Errorf("expected %d, got %d", http.StatusUnauthorized, rec.Code)
 	}
 	if called {
-		t.Errorf("no esperaba que se llame al siguiente handler")
+		t.Errorf("next handler was not expected to be called")
 	}
 }
 
@@ -77,9 +77,9 @@ func TestAuth_WrongKey(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusUnauthorized {
-		t.Errorf("esperaba 401, obtuve %d", rec.Code)
+		t.Errorf("expected %d, got %d", http.StatusUnauthorized, rec.Code)
 	}
 	if called {
-		t.Errorf("no esperaba que se llame al siguiente handler")
+		t.Errorf("next handler was not expected to be called")
 	}
 }

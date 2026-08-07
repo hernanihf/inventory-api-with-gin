@@ -27,11 +27,11 @@ func TestStoreHandler_GetProducts_Found(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Fatalf("esperaba 200, obtuve %d", rec.Code)
+		t.Fatalf("expects 200, got %d", rec.Code)
 	}
 	var response model.Page[model.Product]
 	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("no se pudo decodificar la respuesta: %v", err)
+		t.Fatalf("can not decodify response: %v", err)
 	}
 	got := make(map[string]model.Product, len(response.Items))
 	for _, p := range response.Items {
@@ -39,7 +39,7 @@ func TestStoreHandler_GetProducts_Found(t *testing.T) {
 	}
 	for _, want := range []model.Product{coca, pepsi, sprite} {
 		if got[want.Name] != want {
-			t.Errorf("esperaba %v, obtuve %v", want, got[want.Name])
+			t.Errorf("expects %v, got %v", want, got[want.Name])
 		}
 	}
 }
@@ -56,24 +56,24 @@ func TestStoreHandler_GetProducts_Empty(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Fatalf("esperaba 200, obtuve %d", rec.Code)
+		t.Fatalf("expects 200, got %d", rec.Code)
 	}
 	var response model.Page[model.Product]
 	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("no se pudo decodificar la respuesta: %v", err)
+		t.Fatalf("can not decodify response: %v", err)
 	}
 	if len(response.Items) != 0 {
-		t.Errorf("esperaba 0 elementos, obtuve %d", len(response.Items))
+		t.Errorf("expects 0 elements, got %d", len(response.Items))
 	}
 }
 
 func TestStoreHandler_GetProducts_InvalidLimit(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	testCases := map[string]string{
-		"no numérico":      "abc",
-		"cero":             "0",
-		"negativo":         "-5",
-		"excede el máximo": "101",
+		"not numeric":    "abc",
+		"zero":           "0",
+		"negative":       "-5",
+		"maximum exceed": "101",
 	}
 	for name, limit := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestStoreHandler_GetProducts_InvalidLimit(t *testing.T) {
 			router.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusBadRequest {
-				t.Errorf("esperaba 400 para limit=%q, obtuve %d", limit, rec.Code)
+				t.Errorf("expects 400 for limit=%q, got %d", limit, rec.Code)
 			}
 		})
 	}
@@ -95,8 +95,8 @@ func TestStoreHandler_GetProducts_InvalidLimit(t *testing.T) {
 func TestStoreHandler_GetProducts_InvalidOffset(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	testCases := map[string]string{
-		"no numérico": "abc",
-		"negativo":    "-1",
+		"not numeric": "abc",
+		"negative":    "-1",
 	}
 	for name, offset := range testCases {
 		t.Run(name, func(t *testing.T) {
@@ -109,7 +109,7 @@ func TestStoreHandler_GetProducts_InvalidOffset(t *testing.T) {
 			router.ServeHTTP(rec, req)
 
 			if rec.Code != http.StatusBadRequest {
-				t.Errorf("esperaba 400 para offset=%q, obtuve %d", offset, rec.Code)
+				t.Errorf("expects 400 for offset=%q, got %d", offset, rec.Code)
 			}
 		})
 	}
@@ -130,17 +130,17 @@ func TestStoreHandler_GetProducts_CustomPagination(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Fatalf("esperaba 200, obtuve %d", rec.Code)
+		t.Fatalf("expects 200, got %d", rec.Code)
 	}
 	var page model.Page[model.Product]
 	if err := json.NewDecoder(rec.Body).Decode(&page); err != nil {
-		t.Fatalf("no se pudo decodificar la respuesta: %v", err)
+		t.Fatalf("can not decodify response: %v", err)
 	}
 	if page.Limit != 1 || page.Offset != 1 || page.Total != 3 {
-		t.Errorf("metadata incorrecta: %+v", page)
+		t.Errorf("incorrect metadata: %+v", page)
 	}
 	if len(page.Items) != 1 || page.Items[0].Name != "b" {
-		t.Errorf("esperaba solo 'b', obtuve %+v", page.Items)
+		t.Errorf("expects only 'b', got %+v", page.Items)
 	}
 }
 
@@ -157,14 +157,14 @@ func TestStoreHandler_GetProduct_Found(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Fatalf("esperaba 200, obtuve %d", rec.Code)
+		t.Fatalf("expects 200, got %d", rec.Code)
 	}
 	var got model.Product
 	if err := json.NewDecoder(rec.Body).Decode(&got); err != nil {
-		t.Fatalf("no se pudo decodificar la respuesta: %v", err)
+		t.Fatalf("can not decodify response: %v", err)
 	}
 	if got.Name != "coca" {
-		t.Errorf("esperaba coca, obtuve %s", got.Name)
+		t.Errorf("expects coca, got %s", got.Name)
 	}
 }
 
@@ -180,7 +180,7 @@ func TestStoreHandler_GetProduct_NotFound(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusNotFound {
-		t.Errorf("esperaba 404, obtuve %d", rec.Code)
+		t.Errorf("expects 404, got %d", rec.Code)
 	}
 }
 
@@ -196,7 +196,7 @@ func TestStoreHandler_SellProduct_InsufficientStock(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
-		t.Errorf("esperaba 400, obtuve %d", rec.Code)
+		t.Errorf("expects 400, got %d", rec.Code)
 	}
 }
 
@@ -212,7 +212,7 @@ func TestStoreHandler_SellProduct_ProductNotFound(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusNotFound {
-		t.Errorf("esperaba 404, obtuve %d", rec.Code)
+		t.Errorf("expects 404, got %d", rec.Code)
 	}
 }
 
@@ -228,7 +228,7 @@ func TestStoreHandler_SellProduct_NegativeInput(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
-		t.Errorf("esperaba 400, obtuve %d", rec.Code)
+		t.Errorf("expects 400, got %d", rec.Code)
 	}
 }
 
@@ -245,14 +245,14 @@ func TestStoreHandler_SellProduct_Ok(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Errorf("esperaba 200, obtuve %d", rec.Code)
+		t.Errorf("expects 200, got %d", rec.Code)
 	}
 	var response model.Product
 	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("no se pudo decodificar la respuesta: %v", err)
+		t.Fatalf("can not decodify response: %v", err)
 	}
 	if response.Stock != 0 {
-		t.Errorf("esperaba %d stock de coca, obtuve %d", coca.Stock-1, response.Stock)
+		t.Errorf("expects %d coca stock, got %d", coca.Stock-1, response.Stock)
 	}
 }
 
@@ -269,14 +269,14 @@ func TestStoreHandler_AddProductStock_Ok(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
-		t.Errorf("esperaba 200, obtuve %d", rec.Code)
+		t.Errorf("expects 200, got %d", rec.Code)
 	}
 	var response model.Product
 	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("no se pudo decodificar la respuesta: %v", err)
+		t.Fatalf("can not decodify response: %v", err)
 	}
 	if response.Stock != 2 {
-		t.Errorf("esperaba %d stock de coca, obtuve %d", coca.Stock+1, response.Stock)
+		t.Errorf("expects %d coca stock, got %d", coca.Stock+1, response.Stock)
 	}
 }
 
@@ -292,7 +292,7 @@ func TestStoreHandler_AddProductStock_ProductNotFound(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusNotFound {
-		t.Errorf("esperaba 404, obtuve %d", rec.Code)
+		t.Errorf("expects 404, got %d", rec.Code)
 	}
 }
 
@@ -308,7 +308,7 @@ func TestStoreHandler_AddProductStock_NegativeInput(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
-		t.Errorf("esperaba 400, obtuve %d", rec.Code)
+		t.Errorf("expects 400, got %d", rec.Code)
 	}
 }
 
@@ -324,13 +324,13 @@ func TestStoreHandler_AddProduct_Ok(t *testing.T) {
 	router.ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusCreated {
-		t.Errorf("esperaba 201, obtuve %d", rec.Code)
+		t.Errorf("expects 201, got %d", rec.Code)
 	}
 	var response model.Product
 	if err := json.NewDecoder(rec.Body).Decode(&response); err != nil {
-		t.Fatalf("no se pudo decodificar la respuesta: %v", err)
+		t.Fatalf("can not decodify response: %v", err)
 	}
 	if response.Name != "testing" {
-		t.Errorf("esperaba %s obtuve %s", response.Name, response.Name)
+		t.Errorf("expects %s got %s", response.Name, response.Name)
 	}
 }
